@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +16,7 @@
             --button-hover: #4752c4;
             --accent-color: #5865F2;
         }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: var(--bg-color);
@@ -27,6 +29,7 @@
             padding: 20px;
             box-sizing: border-box;
         }
+
         .container {
             background-color: var(--card-bg);
             border-radius: 12px;
@@ -36,10 +39,12 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+
         .container:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
         }
+
         h2 {
             text-align: center;
             margin-bottom: 30px;
@@ -47,6 +52,7 @@
             font-size: 24px;
             font-weight: 600;
         }
+
         label {
             display: block;
             margin-bottom: 8px;
@@ -54,6 +60,7 @@
             font-weight: 500;
             color: #a0a0a0;
         }
+
         input {
             width: 100%;
             padding: 12px;
@@ -66,11 +73,13 @@
             font-size: 16px;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
+
         input:focus {
             outline: none;
             border-color: var(--accent-color);
             box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.2);
         }
+
         button {
             width: 100%;
             padding: 14px;
@@ -83,12 +92,15 @@
             font-weight: 600;
             transition: background-color 0.3s ease, transform 0.1s ease;
         }
+
         button:hover {
             background-color: var(--button-hover);
         }
+
         button:active {
             transform: scale(0.98);
         }
+
         .status {
             margin-top: 20px;
             text-align: center;
@@ -96,25 +108,67 @@
             color: #a0a0a0;
             font-size: 14px;
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .fade-in {
             animation: fadeIn 0.5s ease forwards;
         }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: auto;
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        #hotkeyContainer input {
+            background-color: var(--input-bg);
+            cursor: pointer;
+        }
+
+        #hotkeyContainer input:focus {
+            background-color: var(--button-bg);
+        }
     </style>
 </head>
+
 <body>
     <div class="container fade-in">
         <h2>Discord Voice Join Sound Bot</h2>
         <form id="configForm">
             <label for="token">Discord Token</label>
             <input type="password" id="token" placeholder="Insert your Discord-Token here" required>
-            
+
             <label for="channelId">Voice Channel ID</label>
             <input type="text" id="channelId" placeholder="Insert the Channel-ID here" required>
-            
+
+            <div style="margin-bottom: 20px;">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="autoMoveEnabled">
+                    <span style="margin-left: 8px;">Enable Auto Move Hotkey</span>
+                </label>
+            </div>
+
+            <div id="hotkeyContainer" style="margin-bottom: 20px; display: none;">
+                <label for="hotkey">Auto Move Hotkey</label>
+                <input type="text" id="hotkey" placeholder="Click and press a key" readonly>
+            </div>
             <button type="submit">Save and Start Bot</button>
         </form>
         <div id="status" class="status" aria-live="polite"></div>
@@ -122,32 +176,176 @@
 
     <script>
         const { ipcRenderer } = require('electron');
-
+    
         const form = document.getElementById('configForm');
         const tokenInput = document.getElementById('token');
         const channelIdInput = document.getElementById('channelId');
         const statusDiv = document.getElementById('status');
-
+        const autoMoveEnabled = document.getElementById('autoMoveEnabled');
+        const hotkeyContainer = document.getElementById('hotkeyContainer');
+        const hotkeyInput = document.getElementById('hotkey');
+    
+        let currentKeys = new Set();
+        let isRecording = false;
+    
+        const keyMapping = {
+            'Numpad0': 'Num0',
+            'Numpad1': 'Num1',
+            'Numpad2': 'Num2',
+            'Numpad3': 'Num3',
+            'Numpad4': 'Num4',
+            'Numpad5': 'Num5',
+            'Numpad6': 'Num6',
+            'Numpad7': 'Num7',
+            'Numpad8': 'Num8',
+            'Numpad9': 'Num9',
+            'NumpadAdd': 'NumPlus',
+            'NumpadSubtract': 'NumMinus',
+            'NumpadMultiply': 'NumMultiply',
+            'NumpadDivide': 'NumDivide',
+            'NumpadDecimal': 'NumDecimal',
+            'NumLock': 'NumLock',
+            
+            'PageUp': 'PageUp',
+            'PageDown': 'PageDown',
+            'End': 'End',
+            'Home': 'Home',
+            'Insert': 'Insert',
+            'Delete': 'Delete',
+            'PrintScreen': 'PrintScreen',
+            'ScrollLock': 'ScrollLock',
+            'Pause': 'Pause',
+            
+            'ArrowUp': 'Up',
+            'ArrowDown': 'Down',
+            'ArrowLeft': 'Left',
+            'ArrowRight': 'Right',
+            
+            'MediaPlayPause': 'MediaPlayPause',
+            'MediaStop': 'MediaStop',
+            'MediaTrackNext': 'MediaNextTrack',
+            'MediaTrackPrevious': 'MediaPreviousTrack',
+            'AudioVolumeMute': 'VolumeMute',
+            'AudioVolumeUp': 'VolumeUp',
+            'AudioVolumeDown': 'VolumeDown',
+            
+            'BrowserHome': 'BrowserHome',
+            'BrowserSearch': 'BrowserSearch',
+            'BrowserFavorites': 'BrowserFavorites',
+            'BrowserRefresh': 'BrowserRefresh',
+            'BrowserStop': 'BrowserStop',
+            'BrowserForward': 'BrowserForward',
+            'BrowserBack': 'BrowserBack',
+            
+            'Tab': 'Tab',
+            'CapsLock': 'CapsLock',
+            'Space': 'Space',
+            'Backspace': 'Backspace',
+            'Enter': 'Enter',
+            'Escape': 'Escape'
+        };
+    
         ipcRenderer.on('config', (event, config) => {
             tokenInput.value = config.token || '';
             channelIdInput.value = config.channelId || '';
+            autoMoveEnabled.checked = config.autoMoveEnabled || false;
+            hotkeyInput.value = config.hotkey || '';
+            hotkeyContainer.style.display = autoMoveEnabled.checked ? 'block' : 'none';
         });
-
+    
+        autoMoveEnabled.addEventListener('change', (e) => {
+            hotkeyContainer.style.display = e.target.checked ? 'block' : 'none';
+            if (!e.target.checked) {
+                hotkeyInput.value = '';
+                ipcRenderer.send('update-hotkey', '');
+            }
+        });
+    
+        hotkeyInput.addEventListener('focus', () => {
+            isRecording = true;
+            currentKeys.clear();
+            hotkeyInput.value = 'Press keys...';
+        });
+    
+        hotkeyInput.addEventListener('blur', () => {
+            isRecording = false;
+        });
+    
+        window.addEventListener('keydown', (e) => {
+            if (!isRecording) return;
+            e.preventDefault();
+    
+            if (e.key === 'Escape') {
+                currentKeys.clear();
+                hotkeyInput.value = '';
+                hotkeyInput.blur();
+                return;
+            }
+    
+            if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
+                return;
+            }
+    
+            currentKeys.clear();
+    
+            if (e.ctrlKey) currentKeys.add('Control');
+            if (e.altKey) currentKeys.add('Alt');
+            if (e.shiftKey) currentKeys.add('Shift');
+            if (e.metaKey) currentKeys.add('Meta');
+    
+            let key = e.code;
+            if (keyMapping[e.code]) {
+                key = keyMapping[e.code];
+            } else if (e.key.length === 1) {
+                key = e.key.toUpperCase();
+            }
+    
+            currentKeys.add(key);
+    
+            hotkeyInput.value = Array.from(currentKeys).join('+');
+    
+            console.log('Key pressed:', {
+                key: e.key,
+                code: e.code,
+                mapped: key,
+                currentKeys: Array.from(currentKeys)
+            });
+        });
+    
+        window.addEventListener('keyup', (e) => {
+            if (!isRecording) return;
+            
+            if (!e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey) {
+                isRecording = false;
+                hotkeyInput.blur();
+            }
+        });
+    
         ipcRenderer.send('get-config');
-
+    
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const token = tokenInput.value;
             const channelId = channelIdInput.value;
-            ipcRenderer.send('save-config', { token, channelId });
+            const autoMove = autoMoveEnabled.checked;
+            const hotkey = hotkeyInput.value;
+            
+            ipcRenderer.send('save-config', { 
+                token, 
+                channelId, 
+                autoMoveEnabled: autoMove,
+                hotkey
+            });
+            
             statusDiv.textContent = 'Configuration saved and bot started...';
             statusDiv.classList.add('fade-in');
         });
-
+    
         ipcRenderer.on('bot-status', (event, status) => {
             statusDiv.textContent = status;
             statusDiv.classList.add('fade-in');
         });
     </script>
 </body>
+
 </html>
