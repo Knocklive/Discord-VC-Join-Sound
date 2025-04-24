@@ -1,8 +1,8 @@
 {
     "name": "discord-vc-join-sound",
-    "version": "1.1.0",
+    "version": "2.0.0",
     "main": "main.js",
-    "description": "Plays a sound when someone joins a voice channel in Discord.",
+    "description": "Discord Support Bot",
     "author": "Knocklive",
     "license": "MIT",
     "homepage": "https://github.com/Knocklive/discord-vc-join-sound",
@@ -16,12 +16,11 @@
     },
     "dependencies": {
         "discord.js-selfbot-v13": "^3.4.0",
-        "electron-store": "^8.1.0",
-        "play-sound": "^1.1.6"
+        "electron-store": "^8.1.0"
     },
     "devDependencies": {
         "electron": "^24.3.0",
-        "electron-builder": "^17.10.0"
+        "electron-builder": "^26.0.12"
     },
     "build": {
         "appId": "de.knocklive.discordvcjoinsound",
@@ -38,17 +37,12 @@
             "audio.js",
             "config.js",
             "icon.ico",
-            "sound.mp3",
-            "cmdmp3.exe"
+            "sound.mp3"
         ],
         "extraResources": [
             {
                 "from": "sound.mp3",
                 "to": "sound.mp3"
-            },
-            {
-                "from": "cmdmp3.exe",
-                "to": "cmdmp3.exe"
             }
         ]
     }

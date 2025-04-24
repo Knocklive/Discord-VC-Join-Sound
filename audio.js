@@ -1,41 +1,66 @@
-const player = require('play-sound')(opts = {})
-const { exec } = require('child_process');
-const path = require('path');
+const { ipcMain } = require("electron")
+const config = require("./config")
 
-function playSound(sendStatus) {
-  const soundFile = path.join(process.resourcesPath, 'sound.mp3');
+let mainWindow
+let audioEnabled = true
+let volume = 0.5
+let customSoundPath = null
 
-  if (process.platform === 'win32') {
-    const cmdmp3Path = path.join(process.resourcesPath, 'cmdmp3.exe');
-    exec(`${cmdmp3Path} "${soundFile}"`, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Error playing Sound (cmdmp3):', error);
-        console.error('stderr:', stderr);
-        sendStatus(`Error playing Sound (cmdmp3): ${error.message}`);
-      } else {
-        console.log('Played Sound successfully (cmdmp3)');
-      }
-    });
-  } else {
-    player.play(soundFile, (err) => {
-      if (err) {
-        console.error('Error playing Sound (play-sound):', err);
-        // afplay (macOS) / aplay (Linux)
-        const command = process.platform === 'darwin' ? 'afplay' : 'aplay';
-        exec(`${command} "${soundFile}"`, (error, stdout, stderr) => {
-          if (error) {
-            console.error(`Error playing Sound (${command}):`, error);
-            console.error('stderr:', stderr);
-            sendStatus(`Error playing Sound (${command}): ${error.message}`);
-          } else {
-            console.log(`Played Sound successfully (${command})`);
-          }
-        });
-      } else {
-        console.log('Played Sound successfully');
-      }
-    });
-  }
+function setMainWindow(window) {
+  mainWindow = window
+
+  // Initialize audio settings from config
+  audioEnabled = config.getSoundEnabled()
+  volume = config.getSoundVolume()
+  customSoundPath = config.getCustomSoundPath()
 }
 
-module.exports = { playSound };
+function playSound() {
+  if (!audioEnabled || !mainWindow) return
+
+  // Tell the renderer process to play the sound
+  mainWindow.webContents.send("play-sound", {
+    volume: volume,
+    customSoundPath: customSoundPath,
+  })
+}
+
+function setupAudioHandlers() {
+  ipcMain.on("set-audio-enabled", (_, enabled) => {
+    audioEnabled = enabled
+    config.setSoundEnabled(enabled)
+  })
+
+  ipcMain.on("set-volume", (_, newVolume) => {
+    volume = newVolume
+    config.setSoundVolume(newVolume)
+  })
+
+  ipcMain.on("set-custom-sound", (_, soundPath) => {
+    customSoundPath = soundPath
+    config.setCustomSoundPath(soundPath)
+  })
+
+  ipcMain.on("reset-to-default-sound", () => {
+    customSoundPath = null
+    config.setCustomSoundPath(null)
+    if (mainWindow) {
+      mainWindow.webContents.send("sound-reset")
+    }
+  })
+
+  ipcMain.handle("get-audio-settings", () => {
+    return {
+      enabled: audioEnabled,
+      volume: volume,
+      customSoundPath: customSoundPath,
+      defaultSoundPath: config.getDefaultSoundPath(),
+    }
+  })
+}
+
+module.exports = {
+  playSound,
+  setMainWindow,
+  setupAudioHandlers,
+}

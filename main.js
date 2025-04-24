@@ -1,6 +1,11 @@
-const { app, BrowserWindow, ipcMain, globalShortcut } = require("electron")
+const { app, BrowserWindow, ipcMain, globalShortcut, dialog } = require("electron")
 const config = require("./config")
 const { startBot, triggerRandomMove } = require("./bot")
+const { setMainWindow, setupAudioHandlers } = require("./audio")
+const path = require("path")
+const fs = require("fs")
+
+global.mainWindow = null;
 
 let mainWindow
 let currentHotkey = ""
@@ -25,8 +30,8 @@ const acceleratorMapping = {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 370,
-    height: 700,
+    width: 800,
+    height: 990,
     resizable: false,
     webPreferences: {
       nodeIntegration: true,
@@ -35,6 +40,8 @@ function createWindow() {
   })
 
   mainWindow.loadFile("index.html")
+  setMainWindow(mainWindow)
+  global.mainWindow = mainWindow;
 }
 
 function registerHotkey(hotkey) {
@@ -79,46 +86,112 @@ function sendStatus(status) {
   }
 }
 
+// Copy the default sound file to resources if it doesn't exist
+function ensureDefaultSoundExists() {
+  try {
+    const resourcesPath = process.resourcesPath || __dirname
+    const soundFilePath = path.join(resourcesPath, "sound.mp3")
+
+    // Check if sound.mp3 exists in resources
+    if (!fs.existsSync(soundFilePath)) {
+      // Copy from the app directory
+      const sourcePath = path.join(__dirname, "sound.mp3")
+      if (fs.existsSync(sourcePath)) {
+        fs.copyFileSync(sourcePath, soundFilePath)
+        console.log("Default sound file copied to resources")
+      } else {
+        console.error("Default sound file not found in app directory")
+      }
+    }
+  } catch (error) {
+    console.error("Error ensuring default sound exists:", error)
+  }
+}
+
 app.whenReady().then(() => {
+  ensureDefaultSoundExists()
   createWindow()
+  setupAudioHandlers()
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-app.on("window-all-closed", () => {
-  globalShortcut.unregisterAll()
-  if (process.platform !== "darwin") app.quit()
-})
+ipcMain.on(
+  "save-config",
+  (
+    event,
+    {
+      token,
+      channelIds,
+      autoMoveEnabled,
+      hotkey,
+      blacklistedNicknames,
+      whitelistedNicknames,
+      useWhitelist,
+      autoMoveBlacklistedNicknames,
+      autoMoveWhitelistedNicknames,
+      autoMoveUseWhitelist,
+      ignoreBots,
+      autoMoveIgnoreBots,
+    },
+  ) => {
+    console.log("Saving config with hotkey:", hotkey)
 
-ipcMain.on("save-config", (event, { token, channelId, autoMoveEnabled, hotkey }) => {
-  console.log("Saving config with hotkey:", hotkey)
+    config.setToken(token)
+    config.setChannelIds(channelIds)
+    config.setAutoMoveEnabled(autoMoveEnabled)
+    config.setHotkey(hotkey)
+    config.setBlacklistedNicknames(blacklistedNicknames || [])
+    config.setWhitelistedNicknames(whitelistedNicknames || [])
+    config.setUseWhitelist(useWhitelist)
+    config.setAutoMoveBlacklistedNicknames(autoMoveBlacklistedNicknames || [])
+    config.setAutoMoveWhitelistedNicknames(autoMoveWhitelistedNicknames || [])
+    config.setAutoMoveUseWhitelist(autoMoveUseWhitelist)
+    config.setIgnoreBots(ignoreBots)
+    config.setAutoMoveIgnoreBots(autoMoveIgnoreBots)
 
-  config.setToken(token)
-  config.setChannelId(channelId)
-  config.setAutoMoveEnabled(autoMoveEnabled)
-  config.setHotkey(hotkey)
-
-  if (autoMoveEnabled && hotkey) {
-    registerHotkey(hotkey)
-  } else {
-    if (currentHotkey) {
-      globalShortcut.unregister(currentHotkey)
-      currentHotkey = ""
+    if (autoMoveEnabled && hotkey) {
+      registerHotkey(hotkey)
+    } else {
+      if (currentHotkey) {
+        globalShortcut.unregister(currentHotkey)
+        currentHotkey = ""
+      }
     }
-  }
 
-  startBot(sendStatus)
-})
+    startBot(sendStatus)
+  },
+)
 
 ipcMain.on("get-config", (event) => {
   event.reply("config", {
     token: config.getToken(),
-    channelId: config.getChannelId(),
+    channelIds: config.getChannelIds(),
     autoMoveEnabled: config.getAutoMoveEnabled(),
     hotkey: config.getHotkey(),
+    blacklistedNicknames: config.getBlacklistedNicknames() || [],
+    whitelistedNicknames: config.getWhitelistedNicknames() || [],
+    useWhitelist: config.getUseWhitelist(),
+    autoMoveBlacklistedNicknames: config.getAutoMoveBlacklistedNicknames() || [],
+    autoMoveWhitelistedNicknames: config.getAutoMoveWhitelistedNicknames() || [],
+    autoMoveUseWhitelist: config.getAutoMoveUseWhitelist(),
+    ignoreBots: config.getIgnoreBots(),
+    autoMoveIgnoreBots: config.getAutoMoveIgnoreBots(),
   })
+})
+
+ipcMain.handle("select-sound-file", async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ["openFile"],
+    filters: [{ name: "Audio Files", extensions: ["mp3", "wav"] }],
+  })
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0]
+  }
+  return null
 })
 
 app.on("ready", () => {
@@ -129,9 +202,19 @@ app.on("ready", () => {
     registerHotkey(savedHotkey)
   }
 
-  if (config.getToken() && config.getChannelId()) {
+  if (config.getToken() && config.getChannelIds().length > 0) {
     startBot(sendStatus)
   }
+})
+
+ipcMain.handle('get-move-history', () => {
+  const { getMoveHistory } = require('./bot');
+  return getMoveHistory();
+});
+
+app.on("window-all-closed", () => {
+  globalShortcut.unregisterAll()
+  if (process.platform !== "darwin") app.quit()
 })
 
 app.on("will-quit", () => {

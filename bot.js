@@ -3,6 +3,48 @@ const config = require("./config")
 const { playSound } = require("./audio")
 
 let client
+let moveHistory = [];
+
+function addToMoveHistory(user, channelId) {
+  const moveEntry = {
+    username: user.username,
+    displayName: user.displayName || user.username,
+    userId: user.id,
+    timestamp: new Date().toISOString(),
+    channelId: channelId
+  };
+  
+  moveHistory.unshift(moveEntry);
+  
+  if (moveHistory.length > 50) {
+    moveHistory = moveHistory.slice(0, 50);
+  }
+  
+  if (global.mainWindow) {
+    global.mainWindow.webContents.send('move-history-updated', moveHistory);
+  }
+}
+
+// Helper function to check if a user matches a filter list
+function userMatchesFilter(user, member, filterList) {
+  if (!user || !filterList || !filterList.length) return false
+
+  // Get all possible name variations
+  const username = user.username?.toLowerCase() || ""
+  const displayName = user.displayName?.toLowerCase() || user.username?.toLowerCase() || ""
+  const nickname = member?.nickname?.toLowerCase() || ""
+
+  return filterList.some((filter) => {
+    if (!filter) return false
+    const filterLower = filter.toLowerCase()
+    return username.includes(filterLower) || displayName.includes(filterLower) || nickname.includes(filterLower)
+  })
+}
+
+// Helper function to check if a user is a bot
+function isBot(user) {
+  return user && user.bot === true
+}
 
 async function triggerRandomMove() {
   console.log("Auto-move triggered")
@@ -12,7 +54,14 @@ async function triggerRandomMove() {
     return
   }
 
-  const sourceChannelId = config.getChannelId()
+  const channelIds = config.getChannelIds()
+  if (!channelIds || channelIds.length === 0) {
+    console.log("No source channels configured")
+    return
+  }
+
+  // Randomly select a channel if multiple are configured
+  const sourceChannelId = channelIds[Math.floor(Math.random() * channelIds.length)]
 
   try {
     const sourceChannel = await client.channels.fetch(sourceChannelId)
@@ -44,11 +93,41 @@ async function triggerRandomMove() {
       return
     }
 
-    const randomMember = members[Math.floor(Math.random() * members.length)]
+    // Filter members based on whitelist/blacklist and bot status
+    const useWhitelist = config.getAutoMoveUseWhitelist()
+    const whitelistedNicknames = config.getAutoMoveWhitelistedNicknames() || []
+    const blacklistedNicknames = config.getAutoMoveBlacklistedNicknames() || []
+    const ignoreBots = config.getAutoMoveIgnoreBots()
+
+    const filteredMembers = members.filter((member) => {
+      const user = member.user
+
+      // Skip bots if ignore bots is enabled
+      if (ignoreBots && isBot(user)) {
+        console.log(`Skipping bot user: ${user.username}`)
+        return false
+      }
+
+      if (useWhitelist) {
+        // In whitelist mode, only move users in the whitelist
+        return userMatchesFilter(user, member, whitelistedNicknames)
+      } else {
+        // In blacklist mode, don't move users in the blacklist
+        return !userMatchesFilter(user, member, blacklistedNicknames)
+      }
+    })
+
+    if (filteredMembers.length === 0) {
+      console.log("No eligible members to move after filtering")
+      return
+    }
+
+    const randomMember = filteredMembers[Math.floor(Math.random() * filteredMembers.length)]
 
     console.log(`Attempting to move ${randomMember.user.username} to channel ${targetChannelId}`)
     await randomMember.voice.setChannel(targetChannelId)
     console.log(`Successfully moved ${randomMember.user.username}`)
+    addToMoveHistory(randomMember.user, targetChannelId);
   } catch (error) {
     console.error("Failed to move member:", error)
   }
@@ -67,16 +146,54 @@ function startBot(sendStatus) {
 
   client.once("ready", () => {
     console.log("Bot is ready!")
-    sendStatus("Bot is ready and watching the Voice-Channel")
+    sendStatus("Bot is ready and watching the Voice-Channels")
   })
 
   client.on("voiceStateUpdate", (oldState, newState) => {
-    const channelId = config.getChannelId()
-    if (newState.channelId === channelId && oldState.channelId !== channelId) {
+    const channelIds = config.getChannelIds()
+    if (channelIds.includes(newState.channelId) && !channelIds.includes(oldState.channelId)) {
       const user = newState.member.user
-      console.log(`${user.username} joined the channel`)
-      sendStatus(`${user.username} joined the Channel. Playing Sound.`)
-      playSound(sendStatus)
+      const member = newState.member
+      const username = user.username
+
+      // Check if the user is a bot and if we should ignore bots
+      const ignoreBots = config.getIgnoreBots()
+      if (ignoreBots && isBot(user)) {
+        console.log(`Ignoring bot user: ${username}`)
+        sendStatus(`${username} joined the Channel but is a bot. Ignoring.`)
+        return
+      }
+
+      // Check if the username/nickname is in whitelist/blacklist
+      const useWhitelist = config.getUseWhitelist()
+      const whitelistedNicknames = config.getWhitelistedNicknames() || []
+      const blacklistedNicknames = config.getBlacklistedNicknames() || []
+
+      let shouldPlaySound = false
+
+      if (useWhitelist) {
+        // In whitelist mode, only play for users in the whitelist
+        shouldPlaySound = userMatchesFilter(user, member, whitelistedNicknames)
+
+        if (!shouldPlaySound) {
+          console.log(`${username} is not in whitelist. Ignoring.`)
+          sendStatus(`${username} joined the Channel but is not in whitelist. Ignoring.`)
+          return
+        }
+      } else {
+        // In blacklist mode, don't play for users in the blacklist
+        shouldPlaySound = !userMatchesFilter(user, member, blacklistedNicknames)
+
+        if (!shouldPlaySound) {
+          console.log(`${username} is blacklisted. Ignoring.`)
+          sendStatus(`${username} joined the Channel but is blacklisted. Ignoring.`)
+          return
+        }
+      }
+
+      console.log(`${username} joined the channel`)
+      sendStatus(`${username} joined the Channel. Playing Sound.`)
+      playSound()
     }
   })
 
@@ -86,4 +203,4 @@ function startBot(sendStatus) {
   })
 }
 
-module.exports = { startBot, triggerRandomMove }
+module.exports = { startBot, triggerRandomMove, getMoveHistory: () => moveHistory };

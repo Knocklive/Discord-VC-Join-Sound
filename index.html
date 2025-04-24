@@ -8,49 +8,109 @@
     <style>
         :root {
             --bg-color: #1a1b1e;
-            --card-bg: #25262b;
             --text-color: #ffffff;
             --input-bg: #2c2e33;
             --input-border: #40414f;
             --button-bg: #5865F2;
             --button-hover: #4752c4;
             --accent-color: #5865F2;
+            --danger-color: #ed4245;
+            --danger-hover: #c03537;
+            --success-color: #3ba55c;
+            --success-hover: #2d7d44;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
             height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        .container {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        h2 {
+        .app-header {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 15px 20px;
             text-align: center;
-            margin-bottom: 30px;
+            border-bottom: 1px solid var(--input-border);
+            position: relative;
+        }
+
+        .app-header h1 {
             color: var(--accent-color);
             font-size: 24px;
             font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid var(--input-border);
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid var(--accent-color);
+            color: var(--accent-color);
+            background-color: rgba(88, 101, 242, 0.1);
+        }
+
+        .tab:hover:not(.active) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding-bottom: 120px;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .section {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            margin-bottom: 15px;
+            color: var(--accent-color);
+            font-size: 18px;
+            font-weight: 500;
+            border-bottom: 1px solid var(--input-border);
+            padding-bottom: 8px;
         }
 
         label {
@@ -61,28 +121,28 @@
             color: #a0a0a0;
         }
 
-        input {
+        input,
+        select {
             width: 100%;
             padding: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border: 2px solid var(--input-border);
             border-radius: 8px;
             background-color: var(--input-bg);
             color: var(--text-color);
-            box-sizing: border-box;
             font-size: 16px;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        input:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: var(--accent-color);
             box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.2);
         }
 
         button {
-            width: 100%;
-            padding: 14px;
+            padding: 12px 16px;
             background-color: var(--button-bg);
             color: white;
             border: none;
@@ -101,12 +161,20 @@
             transform: scale(0.98);
         }
 
-        .status {
-            margin-top: 20px;
+        .status-bar {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 10px 20px;
             text-align: center;
             font-style: italic;
             color: #a0a0a0;
             font-size: 14px;
+            border-top: 1px solid var(--input-border);
+            min-height: 40px;
+            position: fixed;
+            bottom: 75px;
+            left: 0;
+            right: 0;
+            z-index: 99;
         }
 
         @keyframes fadeIn {
@@ -121,14 +189,11 @@
             }
         }
 
-        .fade-in {
-            animation: fadeIn 0.5s ease forwards;
-        }
-
         .checkbox-container {
             display: flex;
             align-items: center;
             cursor: pointer;
+            margin-bottom: 15px;
         }
 
         .checkbox-container input[type="checkbox"] {
@@ -145,49 +210,732 @@
         #hotkeyContainer input:focus {
             background-color: var(--button-bg);
         }
+
+        .slider-container {
+            margin-bottom: 15px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: var(--input-bg);
+            outline: none;
+            margin-top: 10px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            background: var(--button-hover);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            transition: background 0.3s ease;
+            border: none;
+        }
+
+        .slider::-moz-range-thumb:hover {
+            background: var(--button-hover);
+        }
+
+        .file-input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .file-input-container input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .file-input-container button {
+            width: auto;
+            white-space: nowrap;
+        }
+
+        .list-container {
+            margin-bottom: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            background-color: var(--input-bg);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 8px;
+        }
+
+        .list-item span {
+            flex: 1;
+        }
+
+        .list-item button {
+            width: auto;
+            padding: 6px 10px;
+            background-color: var(--danger-color);
+            margin-left: 10px;
+            font-size: 14px;
+        }
+
+        .list-item button:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .add-item-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .add-item-container input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .add-item-container button {
+            width: auto;
+            white-space: nowrap;
+            background-color: var(--success-color);
+        }
+
+        .add-item-container button:hover {
+            background-color: var(--success-hover);
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: 15px;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            padding: 8px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 0;
+            padding: 6px 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .radio-option input[type="radio"] {
+            width: auto;
+            margin-right: 8px;
+            margin-bottom: 0;
+        }
+
+        .channel-list {
+            margin-bottom: 15px;
+        }
+
+        .save-button-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--bg-color);
+            z-index: 100;
+            border-top: 1px solid var(--input-border);
+            padding: 15px 0;
+            text-align: center;
+        }
+
+        .save-button-container button {
+            min-width: 200px;
+        }
+
+        .empty-list-message {
+            padding: 15px;
+            text-align: center;
+            font-style: italic;
+            color: #a0a0a0;
+        }
+
+        .help-text {
+            font-size: 13px;
+            color: #a0a0a0;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .filter-info {
+            background-color: rgba(88, 101, 242, 0.1);
+            border-left: 3px solid var(--accent-color);
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .fixed-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--bg-color);
+            z-index: 100;
+            border-top: 1px solid var(--input-border);
+            padding: 15px 0;
+            text-align: center;
+        }
+
+        .content-padding-bottom {
+            padding-bottom: 70px;
+        }
+
+        .checkbox-container,
+        .radio-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 15px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .checkbox-container:hover,
+        .radio-option:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .checkbox-container input[type="checkbox"],
+        .radio-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            margin-bottom: 0;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
+
+        .checkbox-container span,
+        .radio-option span {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .save-button-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--bg-color);
+            z-index: 100;
+            border-top: 1px solid var(--input-border);
+            padding: 15px 0;
+            text-align: center;
+        }
+
+        .history-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            z-index: 101;
+        }
+
+        .history-button svg {
+            width: 100%;
+            height: 100%;
+            transform: scale(2);
+        }
+
+        .history-button:hover {
+            background-color: var(--button-hover);
+        }
+
+        .history-sidebar {
+            position: fixed;
+            top: 0;
+            right: -350px;
+            width: 350px;
+            height: 100%;
+            background-color: var(--bg-color);
+            border-left: 1px solid var(--input-border);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .history-sidebar.open {
+            right: 0;
+        }
+
+        .history-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--input-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-header h2 {
+            color: var(--accent-color);
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .history-close {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .history-close:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .history-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .history-item {
+            background-color: var(--input-bg);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .history-item-name {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .history-item-time {
+            color: #a0a0a0;
+            font-size: 12px;
+        }
+
+        .history-item-id {
+            color: #a0a0a0;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .history-empty {
+            text-align: center;
+            color: #a0a0a0;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.open {
+            display: block;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--input-border);
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            transition: background-color 0.2s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: var(--accent-color);
+        }
+
+        ::-webkit-scrollbar-corner {
+            background-color: transparent;
+        }
+
+        .tab-content,
+        .list-container,
+        .history-content {
+            scrollbar-width: thin;
+            scrollbar-color: var(--input-border) rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--input-border) rgba(0, 0, 0, 0.2);
+        }
+
+        .history-content::-webkit-scrollbar-track,
+        .list-container::-webkit-scrollbar-track {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
     </style>
 </head>
 
 <body>
-    <div class="container fade-in">
-        <h2>Discord Voice Join Sound Bot</h2>
-        <form id="configForm">
-            <label for="token">Discord Token</label>
-            <input type="password" id="token" placeholder="Insert your Discord-Token here" required>
-
-            <label for="channelId">Voice Channel ID</label>
-            <input type="text" id="channelId" placeholder="Insert the Channel-ID here" required>
-
-            <div style="margin-bottom: 20px;">
-                <label class="checkbox-container">
-                    <input type="checkbox" id="autoMoveEnabled">
-                    <span style="margin-left: 8px;">Enable Auto Move Hotkey</span>
-                </label>
-            </div>
-
-            <div id="hotkeyContainer" style="margin-bottom: 20px; display: none;">
-                <label for="hotkey">Auto Move Hotkey</label>
-                <input type="text" id="hotkey" placeholder="Click and press a key" readonly>
-            </div>
-            <button type="submit">Save and Start Bot</button>
-        </form>
-        <div id="status" class="status" aria-live="polite"></div>
+    <div class="app-header">
+        <h1>Discord Support Bot</h1>
+        <button class="history-button" id="historyBtn" title="View History">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 8v4l3 3"></path>
+                <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+        </button>
     </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="bot-config">Bot Configuration</div>
+        <div class="tab" data-tab="sound">Sound Settings</div>
+        <div class="tab" data-tab="auto-move">Auto Move Settings</div>
+        <div class="tab" data-tab="sound-filter">Sound Filter</div>
+        <div class="tab" data-tab="auto-move-filter">Auto Move Filter</div>
+    </div>
+
+    <div class="content-area">
+        <form id="configForm">
+            <!-- Bot Configuration Tab -->
+            <div id="bot-configTab" class="tab-content active">
+                <div class="section">
+                    <h3>Discord Bot Settings</h3>
+                    <label for="token">Discord Token</label>
+                    <input type="password" id="token" placeholder="Insert your Discord-Token here" required>
+
+                    <h3>Voice Channels</h3>
+                    <p class="help-text">Add voice channels to track for join events</p>
+
+                    <div id="channelList" class="list-container">
+                        <!-- Channel items will be added here dynamically -->
+                    </div>
+
+                    <div class="add-item-container">
+                        <input type="text" id="newChannelId" placeholder="Enter channel ID">
+                        <button type="button" id="addChannelBtn">Add Channel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sound Settings Tab -->
+            <div id="soundTab" class="tab-content">
+                <div class="section">
+                    <h3>Sound Settings</h3>
+                    <label class="checkbox-container" for="soundEnabled">
+                        <input type="checkbox" id="soundEnabled" checked>
+                        <span>Enable Sound</span>
+                    </label>
+
+                    <div class="slider-container">
+                        <label for="volumeSlider">Volume: <span id="volumeValue">50%</span></label>
+                        <input type="range" min="0" max="100" value="50" class="slider" id="volumeSlider">
+                    </div>
+
+                    <div class="file-input-container">
+                        <input type="text" id="soundPath" placeholder="Default sound" readonly>
+                        <button type="button" id="browseSoundBtn">Browse</button>
+                        <button type="button" id="resetSoundBtn">Reset</button>
+                    </div>
+
+                    <button type="button" id="testSoundBtn">Test Sound</button>
+                </div>
+            </div>
+
+            <!-- Auto Move Settings Tab -->
+            <div id="auto-moveTab" class="tab-content">
+                <div class="section">
+                    <h3>Auto Move Settings</h3>
+                    <label class="checkbox-container" for="autoMoveEnabled">
+                        <input type="checkbox" id="autoMoveEnabled">
+                        <span>Enable Auto Move Hotkey</span>
+                    </label>
+
+                    <div id="hotkeyContainer" style="display: none;">
+                        <label for="hotkey">Auto Move Hotkey</label>
+                        <input type="text" id="hotkey" placeholder="Click and press a key" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sound Filter Tab -->
+            <div id="sound-filterTab" class="tab-content">
+                <div class="section">
+                    <h3>Sound Filter Mode</h3>
+                    <div class="filter-info">
+                        Filtering checks both username, display name, and server nickname. A match occurs if any of
+                        these contain the filter text.
+                    </div>
+
+                    <label class="checkbox-container" for="ignoreBots">
+                        <input type="checkbox" id="ignoreBots" checked>
+                        <span>Ignore Bots (Don't play sound for bot users)</span>
+                    </label>
+
+                    <div class="radio-group">
+                        <label class="radio-option" for="useBlacklist">
+                            <input type="radio" name="nicknameFilterMode" id="useBlacklist" checked>
+                            <span>Blacklist Mode (Block specific users)</span>
+                        </label>
+                        <label class="radio-option" for="useWhitelist">
+                            <input type="radio" name="nicknameFilterMode" id="useWhitelist">
+                            <span>Whitelist Mode (Allow only specific users)</span>
+                        </label>
+                    </div>
+
+                    <div id="blacklistSection">
+                        <h3>Blacklisted Names</h3>
+                        <p class="help-text">Users with these names in their username, display name, or nickname will
+                            not trigger the sound.</p>
+
+                        <div id="blacklistItems" class="list-container">
+                            <!-- Blacklist items will be added here dynamically -->
+                        </div>
+
+                        <div class="add-item-container">
+                            <input type="text" id="newBlacklistItem" placeholder="Enter name to blacklist">
+                            <button type="button" id="addBlacklistBtn">Add</button>
+                        </div>
+                    </div>
+
+                    <div id="whitelistSection" style="display: none;">
+                        <h3>Whitelisted Names</h3>
+                        <p class="help-text">Only users with these names in their username, display name, or nickname
+                            will trigger the sound.</p>
+
+                        <div id="whitelistItems" class="list-container">
+                            <!-- Whitelist items will be added here dynamically -->
+                        </div>
+
+                        <div class="add-item-container">
+                            <input type="text" id="newWhitelistItem" placeholder="Enter name to whitelist">
+                            <button type="button" id="addWhitelistBtn">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auto Move Filter Tab -->
+            <div id="auto-move-filterTab" class="tab-content">
+                <div class="section">
+                    <h3>Auto Move Filter Mode</h3>
+                    <div class="filter-info">
+                        Filtering checks both username, display name, and server nickname. A match occurs if any of
+                        these contain the filter text.
+                    </div>
+
+                    <label class="checkbox-container" for="autoMoveIgnoreBots">
+                        <input type="checkbox" id="autoMoveIgnoreBots" checked>
+                        <span>Ignore Bots (Don't move bot users)</span>
+                    </label>
+
+                    <div class="radio-group">
+                        <label class="radio-option" for="autoMoveUseBlacklist">
+                            <input type="radio" name="autoMoveFilterMode" id="autoMoveUseBlacklist" checked>
+                            <span>Blacklist Mode (Don't move specific users)</span>
+                        </label>
+                        <label class="radio-option" for="autoMoveUseWhitelist">
+                            <input type="radio" name="autoMoveFilterMode" id="autoMoveUseWhitelist">
+                            <span>Whitelist Mode (Only move specific users)</span>
+                        </label>
+                    </div>
+
+                    <div id="autoMoveBlacklistSection">
+                        <h3>Auto Move Blacklisted Names</h3>
+                        <p class="help-text">Users with these names in their username, display name, or nickname will
+                            not be moved.</p>
+
+                        <div id="autoMoveBlacklistItems" class="list-container">
+                            <!-- Auto Move Blacklist items will be added here dynamically -->
+                        </div>
+
+                        <div class="add-item-container">
+                            <input type="text" id="newAutoMoveBlacklistItem" placeholder="Enter name to blacklist">
+                            <button type="button" id="addAutoMoveBlacklistBtn">Add</button>
+                        </div>
+                    </div>
+
+                    <div id="autoMoveWhitelistSection" style="display: none;">
+                        <h3>Auto Move Whitelisted Names</h3>
+                        <p class="help-text">Only users with these names in their username, display name, or nickname
+                            will be moved.</p>
+
+                        <div id="autoMoveWhitelistItems" class="list-container">
+                            <!-- Auto Move Whitelist items will be added here dynamically -->
+                        </div>
+
+                        <div class="add-item-container">
+                            <input type="text" id="newAutoMoveWhitelistItem" placeholder="Enter name to whitelist">
+                            <button type="button" id="addAutoMoveWhitelistBtn">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="save-button-container">
+                <button type="submit" id="saveBtn">Save and Start Bot</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="status" class="status-bar" aria-live="polite">Ready to configure</div>
+
+    <!-- Verlauf Seitenleiste -->
+    <div class="overlay" id="overlay"></div>
+    <div class="history-sidebar" id="historySidebar">
+        <div class="history-header">
+            <h2>Move History</h2>
+            <button class="history-close" id="closeHistoryBtn">&times;</button>
+        </div>
+        <div class="history-content" id="historyContent">
+            <div class="history-empty">No entries in history yet.</div>
+        </div>
+    </div>
+
+    <!-- Hidden audio element for playing sounds -->
+    <audio id="soundPlayer" style="display: none;"></audio>
 
     <script>
         const { ipcRenderer } = require('electron');
-    
+
+        // Form elements
         const form = document.getElementById('configForm');
         const tokenInput = document.getElementById('token');
-        const channelIdInput = document.getElementById('channelId');
         const statusDiv = document.getElementById('status');
         const autoMoveEnabled = document.getElementById('autoMoveEnabled');
         const hotkeyContainer = document.getElementById('hotkeyContainer');
         const hotkeyInput = document.getElementById('hotkey');
-    
+        const soundEnabled = document.getElementById('soundEnabled');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeValue = document.getElementById('volumeValue');
+        const soundPath = document.getElementById('soundPath');
+        const browseSoundBtn = document.getElementById('browseSoundBtn');
+        const resetSoundBtn = document.getElementById('resetSoundBtn');
+        const testSoundBtn = document.getElementById('testSoundBtn');
+        const soundPlayer = document.getElementById('soundPlayer');
+        const ignoreBots = document.getElementById('ignoreBots');
+        const autoMoveIgnoreBots = document.getElementById('autoMoveIgnoreBots');
+
+        // Channel list elements
+        const channelList = document.getElementById('channelList');
+        const newChannelId = document.getElementById('newChannelId');
+        const addChannelBtn = document.getElementById('addChannelBtn');
+
+        // Nickname filter elements
+        const useBlacklist = document.getElementById('useBlacklist');
+        const useWhitelist = document.getElementById('useWhitelist');
+        const blacklistSection = document.getElementById('blacklistSection');
+        const whitelistSection = document.getElementById('whitelistSection');
+        const blacklistItems = document.getElementById('blacklistItems');
+        const whitelistItems = document.getElementById('whitelistItems');
+        const newBlacklistItem = document.getElementById('newBlacklistItem');
+        const newWhitelistItem = document.getElementById('newWhitelistItem');
+        const addBlacklistBtn = document.getElementById('addBlacklistBtn');
+        const addWhitelistBtn = document.getElementById('addWhitelistBtn');
+
+        // Auto move filter elements
+        const autoMoveUseBlacklist = document.getElementById('autoMoveUseBlacklist');
+        const autoMoveUseWhitelist = document.getElementById('autoMoveUseWhitelist');
+        const autoMoveBlacklistSection = document.getElementById('autoMoveBlacklistSection');
+        const autoMoveWhitelistSection = document.getElementById('autoMoveWhitelistSection');
+        const autoMoveBlacklistItems = document.getElementById('autoMoveBlacklistItems');
+        const autoMoveWhitelistItems = document.getElementById('autoMoveWhitelistItems');
+        const newAutoMoveBlacklistItem = document.getElementById('newAutoMoveBlacklistItem');
+        const newAutoMoveWhitelistItem = document.getElementById('newAutoMoveWhitelistItem');
+        const addAutoMoveBlacklistBtn = document.getElementById('addAutoMoveBlacklistBtn');
+        const addAutoMoveWhitelistBtn = document.getElementById('addAutoMoveWhitelistBtn');
+
+        // Tab elements
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // Verlauf elements
+        const historyBtn = document.getElementById('historyBtn');
+        const historySidebar = document.getElementById('historySidebar');
+        const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+        const historyContent = document.getElementById('historyContent');
+        const overlay = document.getElementById('overlay');
+
         let currentKeys = new Set();
         let isRecording = false;
-    
+        let channelIds = [];
+        let blacklistedNicknames = [];
+        let whitelistedNicknames = [];
+        let autoMoveBlacklistedNicknames = [];
+        let autoMoveWhitelistedNicknames = [];
+        let defaultSoundPath = null;
+        let ignoreBotsEnabled = true;
+        let autoMoveIgnoreBotsEnabled = true;
+        let moveHistory = [];
+
         const keyMapping = {
             'Numpad0': 'Num0',
             'Numpad1': 'Num1',
@@ -205,7 +953,7 @@
             'NumpadDivide': 'NumDivide',
             'NumpadDecimal': 'NumDecimal',
             'NumLock': 'NumLock',
-            
+
             'PageUp': 'PageUp',
             'PageDown': 'PageDown',
             'End': 'End',
@@ -215,12 +963,12 @@
             'PrintScreen': 'PrintScreen',
             'ScrollLock': 'ScrollLock',
             'Pause': 'Pause',
-            
+
             'ArrowUp': 'Up',
             'ArrowDown': 'Down',
             'ArrowLeft': 'Left',
             'ArrowRight': 'Right',
-            
+
             'MediaPlayPause': 'MediaPlayPause',
             'MediaStop': 'MediaStop',
             'MediaTrackNext': 'MediaNextTrack',
@@ -228,7 +976,7 @@
             'AudioVolumeMute': 'VolumeMute',
             'AudioVolumeUp': 'VolumeUp',
             'AudioVolumeDown': 'VolumeDown',
-            
+
             'BrowserHome': 'BrowserHome',
             'BrowserSearch': 'BrowserSearch',
             'BrowserFavorites': 'BrowserFavorites',
@@ -236,7 +984,7 @@
             'BrowserStop': 'BrowserStop',
             'BrowserForward': 'BrowserForward',
             'BrowserBack': 'BrowserBack',
-            
+
             'Tab': 'Tab',
             'CapsLock': 'CapsLock',
             'Space': 'Space',
@@ -244,106 +992,570 @@
             'Enter': 'Enter',
             'Escape': 'Escape'
         };
-    
+
+        // Verlauf Funktionalität
+        historyBtn.addEventListener('click', () => {
+            historySidebar.classList.add('open');
+            overlay.classList.add('open');
+            loadMoveHistory();
+        });
+
+        closeHistoryBtn.addEventListener('click', () => {
+            historySidebar.classList.remove('open');
+            overlay.classList.remove('open');
+        });
+
+        overlay.addEventListener('click', () => {
+            historySidebar.classList.remove('open');
+            overlay.classList.remove('open');
+        });
+
+        async function loadMoveHistory() {
+            try {
+                moveHistory = await ipcRenderer.invoke('get-move-history');
+                renderMoveHistory();
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+
+        function renderMoveHistory() {
+            if (!moveHistory || moveHistory.length === 0) {
+                historyContent.innerHTML = '<div class="history-empty">No entries in history yet.</div>';
+                return;
+            }
+
+            historyContent.innerHTML = '';
+
+            moveHistory.forEach(entry => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+
+                const date = new Date(entry.timestamp);
+                const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+
+                item.innerHTML = `
+                    <div class="history-item-header">
+                        <div class="history-item-name">${entry.displayName}</div>
+                        <div class="history-item-time">${formattedDate}</div>
+                    </div>
+                    <div class="history-item-id">ID: ${entry.userId}</div>
+                `;
+
+                historyContent.appendChild(item);
+            });
+        }
+
+        // Empfange Updates für den Verlauf
+        ipcRenderer.on('move-history-updated', (event, history) => {
+            moveHistory = history;
+            if (historySidebar.classList.contains('open')) {
+                renderMoveHistory();
+            }
+        });
+
+        // Tab switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}Tab`).classList.add('active');
+            });
+        });
+
+        // Filter mode switching
+        useBlacklist.addEventListener('change', () => {
+            blacklistSection.style.display = 'block';
+            whitelistSection.style.display = 'none';
+        });
+
+        useWhitelist.addEventListener('change', () => {
+            blacklistSection.style.display = 'none';
+            whitelistSection.style.display = 'block';
+        });
+
+        autoMoveUseBlacklist.addEventListener('change', () => {
+            autoMoveBlacklistSection.style.display = 'block';
+            autoMoveWhitelistSection.style.display = 'none';
+        });
+
+        autoMoveUseWhitelist.addEventListener('change', () => {
+            autoMoveBlacklistSection.style.display = 'none';
+            autoMoveWhitelistSection.style.display = 'block';
+        });
+
+        // Load configuration
         ipcRenderer.on('config', (event, config) => {
             tokenInput.value = config.token || '';
-            channelIdInput.value = config.channelId || '';
+            channelIds = config.channelIds || [];
             autoMoveEnabled.checked = config.autoMoveEnabled || false;
             hotkeyInput.value = config.hotkey || '';
             hotkeyContainer.style.display = autoMoveEnabled.checked ? 'block' : 'none';
+
+            blacklistedNicknames = config.blacklistedNicknames || [];
+            whitelistedNicknames = config.whitelistedNicknames || [];
+            const useWhitelistMode = config.useWhitelist || false;
+
+            if (useWhitelistMode) {
+                useWhitelist.checked = true;
+                blacklistSection.style.display = 'none';
+                whitelistSection.style.display = 'block';
+            } else {
+                useBlacklist.checked = true;
+                blacklistSection.style.display = 'block';
+                whitelistSection.style.display = 'none';
+            }
+
+            autoMoveBlacklistedNicknames = config.autoMoveBlacklistedNicknames || [];
+            autoMoveWhitelistedNicknames = config.autoMoveWhitelistedNicknames || [];
+            const autoMoveUseWhitelistMode = config.autoMoveUseWhitelist || false;
+
+            if (autoMoveUseWhitelistMode) {
+                autoMoveUseWhitelist.checked = true;
+                autoMoveBlacklistSection.style.display = 'none';
+                autoMoveWhitelistSection.style.display = 'block';
+            } else {
+                autoMoveUseBlacklist.checked = true;
+                autoMoveBlacklistSection.style.display = 'block';
+                autoMoveWhitelistSection.style.display = 'none';
+            }
+
+            // Set ignore bots checkboxes
+            ignoreBotsEnabled = config.ignoreBots !== undefined ? config.ignoreBots : true;
+            autoMoveIgnoreBotsEnabled = config.autoMoveIgnoreBots !== undefined ? config.autoMoveIgnoreBots : true;
+            ignoreBots.checked = ignoreBotsEnabled;
+            autoMoveIgnoreBots.checked = autoMoveIgnoreBotsEnabled;
+
+            renderChannelList();
+            renderBlacklistItems();
+            renderWhitelistItems();
+            renderAutoMoveBlacklistItems();
+            renderAutoMoveWhitelistItems();
         });
-    
+
+        // Load audio settings
+        ipcRenderer.invoke('get-audio-settings').then(settings => {
+            soundEnabled.checked = settings.enabled;
+            volumeSlider.value = settings.volume * 100;
+            volumeValue.textContent = `${Math.round(settings.volume * 100)}%`;
+            defaultSoundPath = settings.defaultSoundPath;
+
+            if (settings.customSoundPath) {
+                soundPath.value = settings.customSoundPath;
+            } else {
+                soundPath.value = 'Default sound';
+            }
+        });
+
+        // Auto move checkbox
         autoMoveEnabled.addEventListener('change', (e) => {
             hotkeyContainer.style.display = e.target.checked ? 'block' : 'none';
             if (!e.target.checked) {
                 hotkeyInput.value = '';
-                ipcRenderer.send('update-hotkey', '');
             }
         });
-    
+
+        // Hotkey recording
         hotkeyInput.addEventListener('focus', () => {
             isRecording = true;
             currentKeys.clear();
             hotkeyInput.value = 'Press keys...';
         });
-    
+
         hotkeyInput.addEventListener('blur', () => {
             isRecording = false;
         });
-    
+
+        // Sound settings
+        soundEnabled.addEventListener('change', (e) => {
+            ipcRenderer.send('set-audio-enabled', e.target.checked);
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            volumeValue.textContent = `${value}%`;
+            ipcRenderer.send('set-volume', value / 100);
+        });
+
+        browseSoundBtn.addEventListener('click', async () => {
+            const filePath = await ipcRenderer.invoke('select-sound-file');
+            if (filePath) {
+                soundPath.value = filePath;
+                ipcRenderer.send('set-custom-sound', filePath);
+            }
+        });
+
+        resetSoundBtn.addEventListener('click', () => {
+            soundPath.value = 'Default sound';
+            ipcRenderer.send('reset-to-default-sound');
+        });
+
+        testSoundBtn.addEventListener('click', () => {
+            if (soundPath.value && soundPath.value !== 'Default sound') {
+                soundPlayer.src = soundPath.value;
+            } else if (defaultSoundPath) {
+                soundPlayer.src = defaultSoundPath;
+            } else {
+                // Fallback
+                soundPlayer.src = 'sound.mp3';
+            }
+            soundPlayer.volume = volumeSlider.value / 100;
+            soundPlayer.play().catch(err => {
+                console.error('Error playing sound:', err);
+                statusDiv.textContent = `Error playing sound: ${err.message}`;
+            });
+        });
+
+        // Channel list functionality
+        function renderChannelList() {
+            channelList.innerHTML = '';
+
+            if (channelIds.length === 0) {
+                const emptyMessage = document.createElement('p');
+                emptyMessage.textContent = 'No channels added yet.';
+                emptyMessage.className = 'empty-list-message';
+                channelList.appendChild(emptyMessage);
+                return;
+            }
+
+            channelIds.forEach((channelId, index) => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = channelId;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Remove';
+                deleteBtn.type = 'button';
+                deleteBtn.addEventListener('click', () => {
+                    channelIds.splice(index, 1);
+                    renderChannelList();
+                });
+
+                item.appendChild(nameSpan);
+                item.appendChild(deleteBtn);
+                channelList.appendChild(item);
+            });
+        }
+
+        addChannelBtn.addEventListener('click', () => {
+            const channelId = newChannelId.value.trim();
+            if (channelId && !channelIds.includes(channelId)) {
+                channelIds.push(channelId);
+                renderChannelList();
+                newChannelId.value = '';
+            }
+        });
+
+        newChannelId.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addChannelBtn.click();
+            }
+        });
+
+        // Blacklist functionality
+        function renderBlacklistItems() {
+            blacklistItems.innerHTML = '';
+
+            if (blacklistedNicknames.length === 0) {
+                const emptyMessage = document.createElement('p');
+                emptyMessage.textContent = 'No blacklisted names yet.';
+                emptyMessage.className = 'empty-list-message';
+                blacklistItems.appendChild(emptyMessage);
+                return;
+            }
+
+            blacklistedNicknames.forEach((nickname, index) => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = nickname;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Remove';
+                deleteBtn.type = 'button';
+                deleteBtn.addEventListener('click', () => {
+                    blacklistedNicknames.splice(index, 1);
+                    renderBlacklistItems();
+                });
+
+                item.appendChild(nameSpan);
+                item.appendChild(deleteBtn);
+                blacklistItems.appendChild(item);
+            });
+        }
+
+        addBlacklistBtn.addEventListener('click', () => {
+            const nickname = newBlacklistItem.value.trim();
+            if (nickname && !blacklistedNicknames.includes(nickname)) {
+                blacklistedNicknames.push(nickname);
+                renderBlacklistItems();
+                newBlacklistItem.value = '';
+            }
+        });
+
+        newBlacklistItem.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addBlacklistBtn.click();
+            }
+        });
+
+        // Whitelist functionality
+        function renderWhitelistItems() {
+            whitelistItems.innerHTML = '';
+
+            if (whitelistedNicknames.length === 0) {
+                const emptyMessage = document.createElement('p');
+                emptyMessage.textContent = 'No whitelisted names yet.';
+                emptyMessage.className = 'empty-list-message';
+                whitelistItems.appendChild(emptyMessage);
+                return;
+            }
+
+            whitelistedNicknames.forEach((nickname, index) => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = nickname;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Remove';
+                deleteBtn.type = 'button';
+                deleteBtn.addEventListener('click', () => {
+                    whitelistedNicknames.splice(index, 1);
+                    renderWhitelistItems();
+                });
+
+                item.appendChild(nameSpan);
+                item.appendChild(deleteBtn);
+                whitelistItems.appendChild(item);
+            });
+        }
+
+        addWhitelistBtn.addEventListener('click', () => {
+            const nickname = newWhitelistItem.value.trim();
+            if (nickname && !whitelistedNicknames.includes(nickname)) {
+                whitelistedNicknames.push(nickname);
+                renderWhitelistItems();
+                newWhitelistItem.value = '';
+            }
+        });
+
+        newWhitelistItem.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addWhitelistBtn.click();
+            }
+        });
+
+        // Auto Move Blacklist functionality
+        function renderAutoMoveBlacklistItems() {
+            autoMoveBlacklistItems.innerHTML = '';
+
+            if (autoMoveBlacklistedNicknames.length === 0) {
+                const emptyMessage = document.createElement('p');
+                emptyMessage.textContent = 'No auto move blacklisted names yet.';
+                emptyMessage.className = 'empty-list-message';
+                autoMoveBlacklistItems.appendChild(emptyMessage);
+                return;
+            }
+
+            autoMoveBlacklistedNicknames.forEach((nickname, index) => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = nickname;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Remove';
+                deleteBtn.type = 'button';
+                deleteBtn.addEventListener('click', () => {
+                    autoMoveBlacklistedNicknames.splice(index, 1);
+                    renderAutoMoveBlacklistItems();
+                });
+
+                item.appendChild(nameSpan);
+                item.appendChild(deleteBtn);
+                autoMoveBlacklistItems.appendChild(item);
+            });
+        }
+
+        addAutoMoveBlacklistBtn.addEventListener('click', () => {
+            const nickname = newAutoMoveBlacklistItem.value.trim();
+            if (nickname && !autoMoveBlacklistedNicknames.includes(nickname)) {
+                autoMoveBlacklistedNicknames.push(nickname);
+                renderAutoMoveBlacklistItems();
+                newAutoMoveBlacklistItem.value = '';
+            }
+        });
+
+        newAutoMoveBlacklistItem.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addAutoMoveBlacklistBtn.click();
+            }
+        });
+
+        // Auto Move Whitelist functionality
+        function renderAutoMoveWhitelistItems() {
+            autoMoveWhitelistItems.innerHTML = '';
+
+            if (autoMoveWhitelistedNicknames.length === 0) {
+                const emptyMessage = document.createElement('p');
+                emptyMessage.textContent = 'No auto move whitelisted names yet.';
+                emptyMessage.className = 'empty-list-message';
+                autoMoveWhitelistItems.appendChild(emptyMessage);
+                return;
+            }
+
+            autoMoveWhitelistedNicknames.forEach((nickname, index) => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = nickname;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Remove';
+                deleteBtn.type = 'button';
+                deleteBtn.addEventListener('click', () => {
+                    autoMoveWhitelistedNicknames.splice(index, 1);
+                    renderAutoMoveWhitelistItems();
+                });
+
+                item.appendChild(nameSpan);
+                item.appendChild(deleteBtn);
+                autoMoveWhitelistItems.appendChild(item);
+            });
+        }
+
+        addAutoMoveWhitelistBtn.addEventListener('click', () => {
+            const nickname = newAutoMoveWhitelistItem.value.trim();
+            if (nickname && !autoMoveWhitelistedNicknames.includes(nickname)) {
+                autoMoveWhitelistedNicknames.push(nickname);
+                renderAutoMoveWhitelistItems();
+                newAutoMoveWhitelistItem.value = '';
+            }
+        });
+
+        newAutoMoveWhitelistItem.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addAutoMoveWhitelistBtn.click();
+            }
+        });
+
+        // Handle sound reset from main process
+        ipcRenderer.on('sound-reset', () => {
+            soundPath.value = 'Default sound';
+        });
+
+        // Keyboard event handling for hotkey
         window.addEventListener('keydown', (e) => {
             if (!isRecording) return;
             e.preventDefault();
-    
+
             if (e.key === 'Escape') {
                 currentKeys.clear();
                 hotkeyInput.value = '';
                 hotkeyInput.blur();
                 return;
             }
-    
+
             if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
                 return;
             }
-    
+
             currentKeys.clear();
-    
+
             if (e.ctrlKey) currentKeys.add('Control');
             if (e.altKey) currentKeys.add('Alt');
             if (e.shiftKey) currentKeys.add('Shift');
             if (e.metaKey) currentKeys.add('Meta');
-    
+
             let key = e.code;
             if (keyMapping[e.code]) {
                 key = keyMapping[e.code];
             } else if (e.key.length === 1) {
                 key = e.key.toUpperCase();
             }
-    
+
             currentKeys.add(key);
-    
+
             hotkeyInput.value = Array.from(currentKeys).join('+');
-    
-            console.log('Key pressed:', {
-                key: e.key,
-                code: e.code,
-                mapped: key,
-                currentKeys: Array.from(currentKeys)
-            });
         });
-    
+
         window.addEventListener('keyup', (e) => {
             if (!isRecording) return;
-            
+
             if (!e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey) {
                 isRecording = false;
                 hotkeyInput.blur();
             }
         });
-    
+
+        // Handle sound playback from main process
+        ipcRenderer.on('play-sound', (event, options) => {
+            if (options.customSoundPath) {
+                soundPlayer.src = options.customSoundPath;
+            } else if (defaultSoundPath) {
+                soundPlayer.src = defaultSoundPath;
+            } else {
+                soundPlayer.src = 'sound.mp3';
+            }
+
+            soundPlayer.volume = options.volume;
+            soundPlayer.play().catch(err => {
+                console.error('Error playing sound:', err);
+                statusDiv.textContent = `Error playing sound: ${err.message}`;
+            });
+        });
+
+        // Load initial config
         ipcRenderer.send('get-config');
-    
+
+        // Lade den Verlauf beim Start
+        loadMoveHistory();
+
+        // Form submission
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const token = tokenInput.value;
-            const channelId = channelIdInput.value;
             const autoMove = autoMoveEnabled.checked;
             const hotkey = hotkeyInput.value;
-            
-            ipcRenderer.send('save-config', { 
-                token, 
-                channelId, 
+            const useWhitelistMode = useWhitelist.checked;
+            const autoMoveUseWhitelistMode = autoMoveUseWhitelist.checked;
+            const ignoreBotsValue = ignoreBots.checked;
+            const autoMoveIgnoreBotsValue = autoMoveIgnoreBots.checked;
+
+            ipcRenderer.send('save-config', {
+                token,
+                channelIds,
                 autoMoveEnabled: autoMove,
-                hotkey
+                hotkey,
+                blacklistedNicknames,
+                whitelistedNicknames,
+                useWhitelist: useWhitelistMode,
+                autoMoveBlacklistedNicknames,
+                autoMoveWhitelistedNicknames,
+                autoMoveUseWhitelist: autoMoveUseWhitelistMode,
+                ignoreBots: ignoreBotsValue,
+                autoMoveIgnoreBots: autoMoveIgnoreBotsValue
             });
-            
+
             statusDiv.textContent = 'Configuration saved and bot started...';
-            statusDiv.classList.add('fade-in');
         });
-    
+
         ipcRenderer.on('bot-status', (event, status) => {
             statusDiv.textContent = status;
-            statusDiv.classList.add('fade-in');
         });
     </script>
 </body>
